@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Smart Waste Management Dashboard — Compare baseline fixed-route vs optimized smart routing for municipal waste collection." />
+  <title>Smart Waste Management Dashboard</title>
+
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            surface:   '#0f1117',
+            panel:     '#161922',
+            card:      '#1c1f2e',
+            border:    '#2a2d3e',
+            accent:    '#22d3ee',
+            urgent:    '#f43f5e',
+            warning:   '#facc15',
+            safe:      '#34d399',
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            mono: ['JetBrains Mono', 'Fira Code', 'monospace'],
+          },
+        },
+      },
+    };
+  </script>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+  <!-- Custom Styles -->
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body class="bg-surface text-gray-200 font-sans min-h-screen flex flex-col overflow-hidden">
+
+  <!-- ═══════════════════════════════════════════
+       HEADER
+  ═══════════════════════════════════════════ -->
+  <header id="app-header" class="flex items-center justify-between px-6 py-3 border-b border-border bg-panel/80 backdrop-blur-md z-50 shrink-0">
+    <!-- Logo & Title -->
+    <div class="flex items-center gap-3">
+      <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-accent to-cyan-600 flex items-center justify-center text-lg font-bold text-surface shadow-lg shadow-accent/20">
+        ♻
+      </div>
+      <div>
+        <h1 class="text-base font-bold tracking-tight text-white leading-none">Smart Waste Management</h1>
+        <p class="text-[11px] text-gray-500 font-medium tracking-wide uppercase">Algorithm &amp; Data Structure Dashboard</p>
+      </div>
+    </div>
+
+    <!-- Mode Toggle -->
+    <div id="mode-toggle-wrapper" class="flex items-center gap-3 bg-card border border-border rounded-full px-1.5 py-1">
+      <button id="btn-baseline" class="mode-btn active px-4 py-1.5 rounded-full text-xs font-semibold transition-all duration-300" data-mode="baseline">
+        🚨 Baseline
+      </button>
+      <button id="btn-optimized" class="mode-btn px-4 py-1.5 rounded-full text-xs font-semibold transition-all duration-300" data-mode="optimized">
+        ⭐ Optimized
+      </button>
+    </div>
+
+    <!-- Status Badge -->
+    <div class="flex items-center gap-2">
+      <span class="relative flex h-2.5 w-2.5">
+        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-safe opacity-75"></span>
+        <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-safe"></span>
+      </span>
+      <span class="text-xs text-gray-400 font-medium">System Online</span>
+    </div>
+  </header>
+
+  <!-- ═══════════════════════════════════════════
+       MAIN CONTENT (Sidebar + Map + Panel)
+  ═══════════════════════════════════════════ -->
+  <main class="flex flex-1 overflow-hidden">
+
+    <!-- ─── LEFT SIDEBAR ─── -->
+    <aside id="sidebar" class="w-72 shrink-0 bg-panel border-r border-border flex flex-col overflow-y-auto">
+
+      <!-- Simulation Controls -->
+      <section class="p-4 border-b border-border">
+        <h2 class="text-[11px] uppercase tracking-widest text-gray-500 font-semibold mb-3">Controls</h2>
+
+        <button id="btn-run-simulation" class="w-full py-2.5 rounded-lg bg-gradient-to-r from-accent to-cyan-500 text-surface font-bold text-sm hover:shadow-lg hover:shadow-accent/30 transition-all duration-300 active:scale-[0.98]">
+          ▶ Run Collection
+        </button>
+
+        <button id="btn-reset" class="w-full mt-2 py-2 rounded-lg border border-border text-gray-400 text-xs font-medium hover:bg-card hover:text-gray-200 transition-all duration-200">
+          ↺ Reset Bins
+        </button>
+
+        <button id="btn-empty-all" class="w-full mt-2 py-2 rounded-lg border border-red-500/30 text-red-400 text-xs font-medium hover:bg-red-500/10 hover:text-red-300 transition-all duration-200">
+          🗑 Empty All Bins
+        </button>
+      </section>
+
+      <!-- Bin Legend -->
+      <section class="p-4 border-b border-border">
+        <h2 class="text-[11px] uppercase tracking-widest text-gray-500 font-semibold mb-3">Bin Status Legend</h2>
+        <div class="space-y-2">
+          <div class="flex items-center gap-2.5">
+            <span class="w-3 h-3 rounded-full bg-safe shadow-sm shadow-safe/40"></span>
+            <span class="text-xs text-gray-300">Low (&lt; 50%)</span>
+          </div>
+          <div class="flex items-center gap-2.5">
+            <span class="w-3 h-3 rounded-full bg-warning shadow-sm shadow-warning/40"></span>
+            <span class="text-xs text-gray-300">Medium (50% – 79%)</span>
+          </div>
+          <div class="flex items-center gap-2.5">
+            <span class="w-3 h-3 rounded-full bg-urgent shadow-sm shadow-urgent/40"></span>
+            <span class="text-xs text-gray-300">Urgent (≥ 80%)</span>
+          </div>
+          <div class="flex items-center gap-2.5">
+            <span class="w-3 h-3 rounded-full bg-gray-600"></span>
+            <span class="text-xs text-gray-300">Depot (Truck Start)</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Bin Inventory List -->
+      <section class="p-4 flex-1">
+        <h2 class="text-[11px] uppercase tracking-widest text-gray-500 font-semibold mb-3">Bin Inventory</h2>
+        <ul id="bin-inventory-list" class="space-y-1.5">
+          <!-- Populated by app.js -->
+        </ul>
+      </section>
+    </aside>
+
+    <!-- ─── CITY MAP (Center) ─── -->
+    <section id="map-section" class="flex-1 flex flex-col relative overflow-hidden">
+
+      <!-- Map toolbar -->
+      <div class="flex items-center justify-between px-5 py-2.5 border-b border-border bg-panel/60 backdrop-blur-sm shrink-0">
+        <h2 class="text-sm font-semibold text-gray-300">🏙 Residential Zone — City Map</h2>
+        <span id="map-mode-label" class="text-[11px] font-mono text-accent bg-accent/10 border border-accent/20 px-2.5 py-0.5 rounded-full">BASELINE MODE</span>
+      </div>
+
+      <!-- Map Canvas -->
+      <div id="city-map" class="flex-1 relative bg-surface">
+        <!-- Grid background applied via CSS -->
+        <div id="map-grid-bg" class="absolute inset-0 pointer-events-none"></div>
+
+        <!-- SVG layer for route lines -->
+        <svg id="route-svg" class="absolute inset-0 w-full h-full pointer-events-none" xmlns="http://www.w3.org/2000/svg">
+          <!-- Road edges drawn here -->
+          <g id="road-edges"></g>
+          <!-- Active route path drawn here -->
+          <g id="route-path"></g>
+        </svg>
+
+        <!-- Bin nodes container (positioned absolutely) -->
+        <div id="bin-nodes-container" class="absolute inset-0">
+          <!-- Bin nodes rendered by app.js -->
+        </div>
+
+        <!-- Truck element -->
+        <div id="truck" class="absolute" style="left: -100px; top: -100px;">🚛</div>
+      </div>
+    </section>
+
+    <!-- ─── RIGHT PANEL: Live Metrics ─── -->
+    <aside id="metrics-panel" class="w-80 shrink-0 bg-panel border-l border-border flex flex-col overflow-y-auto">
+
+      <!-- Panel Header -->
+      <div class="p-4 border-b border-border">
+        <h2 class="text-[11px] uppercase tracking-widest text-gray-500 font-semibold mb-1">Live Metrics</h2>
+        <p class="text-[10px] text-gray-600">Comparing Baseline vs Optimized routing</p>
+      </div>
+
+      <!-- Metric Cards -->
+      <div class="p-4 space-y-3 flex-1">
+
+        <!-- Bins Visited -->
+        <div class="metric-card bg-card border border-border rounded-xl p-4">
+          <p class="text-[10px] uppercase tracking-widest text-gray-500 font-semibold mb-2">Bins Visited</p>
+          <div class="flex items-end justify-between">
+            <div>
+              <p class="text-[10px] text-gray-500 mb-0.5">Baseline</p>
+              <p id="metric-baseline-bins" class="text-2xl font-bold text-gray-300 font-mono">—</p>
+            </div>
+            <div class="text-right">
+              <p class="text-[10px] text-gray-500 mb-0.5">Optimized</p>
+              <p id="metric-optimized-bins" class="text-2xl font-bold text-accent font-mono">—</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Distance Traveled -->
+        <div class="metric-card bg-card border border-border rounded-xl p-4">
+          <p class="text-[10px] uppercase tracking-widest text-gray-500 font-semibold mb-2">Distance (km)</p>
+          <div class="flex items-end justify-between">
+            <div>
+              <p class="text-[10px] text-gray-500 mb-0.5">Baseline</p>
+              <p id="metric-baseline-dist" class="text-2xl font-bold text-gray-300 font-mono">—</p>
+            </div>
+            <div class="text-right">
+              <p class="text-[10px] text-gray-500 mb-0.5">Optimized</p>
+              <p id="metric-optimized-dist" class="text-2xl font-bold text-accent font-mono">—</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Fuel & Cost -->
+        <div class="metric-card bg-card border border-border rounded-xl p-4">
+          <p class="text-[10px] uppercase tracking-widest text-gray-500 font-semibold mb-2">Est. Fuel Cost (RM)</p>
+          <div class="flex items-end justify-between">
+            <div>
+              <p class="text-[10px] text-gray-500 mb-0.5">Baseline</p>
+              <p id="metric-baseline-cost" class="text-2xl font-bold text-gray-300 font-mono">—</p>
+            </div>
+            <div class="text-right">
+              <p class="text-[10px] text-gray-500 mb-0.5">Optimized</p>
+              <p id="metric-optimized-cost" class="text-2xl font-bold text-accent font-mono">—</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Savings Badge -->
+        <div id="savings-badge" class="bg-gradient-to-r from-accent/10 to-cyan-500/10 border border-accent/20 rounded-xl p-4 text-center hidden">
+          <p class="text-[10px] uppercase tracking-widest text-accent font-semibold mb-1">Savings</p>
+          <p id="savings-percent" class="text-3xl font-extrabold text-accent font-mono">0%</p>
+          <p class="text-[10px] text-gray-500 mt-1">Reduction in fuel cost</p>
+        </div>
+      </div>
+
+      <!-- Complexity Footer -->
+      <div class="p-4 border-t border-border">
+        <h3 class="text-[10px] uppercase tracking-widest text-gray-500 font-semibold mb-2">Time Complexity</h3>
+        <div class="space-y-1.5">
+          <div class="flex items-center justify-between">
+            <span class="text-[11px] text-gray-400">Baseline Search</span>
+            <code class="text-[11px] font-mono text-gray-500 bg-surface px-2 py-0.5 rounded">O(n)</code>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-[11px] text-gray-400">Hash Lookup</span>
+            <code class="text-[11px] font-mono text-accent bg-accent/10 px-2 py-0.5 rounded">O(1)</code>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-[11px] text-gray-400">Priority Sort</span>
+            <code class="text-[11px] font-mono text-accent bg-accent/10 px-2 py-0.5 rounded">O(log n)</code>
+          </div>
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <!-- ═══════════════════════════════════════════
+       SCRIPTS (Order matters: data → structures → app → simulation)
+  ═══════════════════════════════════════════ -->
+  <script src="js/datastructures.js"></script>
+  <script src="js/simulation.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

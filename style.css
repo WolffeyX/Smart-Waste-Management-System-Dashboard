@@ -1,0 +1,331 @@
+/* ════════════════════════════════════════════════════════════
+   Smart Waste Management Dashboard — Custom Styles
+   ════════════════════════════════════════════════════════════ */
+
+/* ─── CSS Variables ─── */
+:root {
+  --color-surface:  #0f1117;
+  --color-panel:    #161922;
+  --color-card:     #1c1f2e;
+  --color-border:   #2a2d3e;
+  --color-accent:   #22d3ee;
+  --color-urgent:   #f43f5e;
+  --color-warning:  #facc15;
+  --color-safe:     #34d399;
+  --color-road:     #2a2d3e;
+}
+
+/* ─── Global ─── */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 5px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-surface);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #3a3d5e;
+}
+
+/* ─── Mode Toggle Buttons ─── */
+.mode-btn {
+  color: #6b7280;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+}
+
+.mode-btn.active {
+  background: var(--color-accent);
+  color: var(--color-surface);
+  box-shadow: 0 0 16px rgba(34, 211, 238, 0.25);
+}
+
+.mode-btn:hover:not(.active) {
+  color: #d1d5db;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* ─── City Map ─── */
+#city-map {
+  background:
+    radial-gradient(circle at 50% 50%, rgba(34, 211, 238, 0.02) 0%, transparent 70%),
+    var(--color-surface);
+}
+
+/* Dot grid background */
+#map-grid-bg {
+  background-image: radial-gradient(circle, var(--color-border) 1px, transparent 1px);
+  background-size: 30px 30px;
+  opacity: 0.5;
+}
+
+/* ─── Road Edges (SVG) ─── */
+#road-edges line,
+#road-edges path {
+  stroke: var(--color-road);
+  stroke-width: 2;
+  stroke-linecap: round;
+  opacity: 0.5;
+}
+
+/* Active Route Path */
+#route-path line,
+#route-path path {
+  stroke: var(--color-accent);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-dasharray: 8 4;
+  opacity: 0.9;
+  filter: drop-shadow(0 0 4px rgba(34, 211, 238, 0.4));
+  animation: dashMove 0.8s linear infinite;
+}
+
+@keyframes dashMove {
+  to {
+    stroke-dashoffset: -12;
+  }
+}
+
+/* Baseline route override (red tint) */
+.route-baseline line,
+.route-baseline path {
+  stroke: var(--color-urgent);
+  filter: drop-shadow(0 0 4px rgba(244, 63, 94, 0.3));
+}
+
+/* ─── Bin Nodes ─── */
+.bin-node {
+  position: absolute;
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transform: translate(-50%, -50%);
+  z-index: 10;
+  user-select: none;
+}
+
+.bin-node:hover {
+  transform: translate(-50%, -50%) scale(1.12);
+  z-index: 20;
+}
+
+.bin-node:active {
+  transform: translate(-50%, -50%) scale(0.95);
+}
+
+/* Bin icon */
+.bin-node .bin-icon {
+  font-size: 20px;
+  line-height: 1;
+}
+
+/* Bin ID label */
+.bin-node .bin-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  margin-top: 2px;
+  opacity: 0.85;
+}
+
+/* Capacity badge */
+.bin-node .bin-capacity-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  font-size: 9px;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', monospace;
+  padding: 1px 5px;
+  border-radius: 9999px;
+  line-height: 1.4;
+  pointer-events: none;
+}
+
+/* Status-based colors */
+.bin-node.status-safe {
+  background: rgba(52, 211, 153, 0.15);
+  border: 1.5px solid rgba(52, 211, 153, 0.4);
+  box-shadow: 0 0 12px rgba(52, 211, 153, 0.1);
+  color: var(--color-safe);
+}
+.bin-node.status-safe .bin-capacity-badge {
+  background: var(--color-safe);
+  color: var(--color-surface);
+}
+
+.bin-node.status-warning {
+  background: rgba(250, 204, 21, 0.12);
+  border: 1.5px solid rgba(250, 204, 21, 0.4);
+  box-shadow: 0 0 12px rgba(250, 204, 21, 0.1);
+  color: var(--color-warning);
+}
+.bin-node.status-warning .bin-capacity-badge {
+  background: var(--color-warning);
+  color: var(--color-surface);
+}
+
+.bin-node.status-urgent {
+  background: rgba(244, 63, 94, 0.15);
+  border: 1.5px solid rgba(244, 63, 94, 0.5);
+  box-shadow: 0 0 18px rgba(244, 63, 94, 0.2);
+  color: var(--color-urgent);
+  animation: urgentPulse 1.8s ease-in-out infinite;
+}
+.bin-node.status-urgent .bin-capacity-badge {
+  background: var(--color-urgent);
+  color: white;
+}
+
+@keyframes urgentPulse {
+  0%, 100% { box-shadow: 0 0 12px rgba(244, 63, 94, 0.15); }
+  50%      { box-shadow: 0 0 24px rgba(244, 63, 94, 0.35); }
+}
+
+/* Depot node */
+.bin-node.depot-node {
+  background: rgba(107, 114, 128, 0.2);
+  border: 1.5px solid rgba(107, 114, 128, 0.5);
+  color: #9ca3af;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+}
+.bin-node.depot-node .bin-icon {
+  font-size: 22px;
+}
+
+/* ─── Truck ─── */
+#truck {
+  position: absolute;
+  font-size: 2rem;
+  transition: top 1s ease-in-out, left 1s ease-in-out;
+  z-index: 50;
+  filter: drop-shadow(0 0 8px rgba(34, 211, 238, 0.4));
+}
+
+/* ─── Metric Cards ─── */
+.metric-card {
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.metric-card:hover {
+  border-color: rgba(34, 211, 238, 0.2);
+  box-shadow: 0 0 20px rgba(34, 211, 238, 0.05);
+}
+
+/* ─── Bin Inventory List Items ─── */
+.bin-inventory-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  transition: background 0.2s ease;
+  cursor: default;
+}
+
+.bin-inventory-item:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.bin-inventory-item .inv-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 9999px;
+  flex-shrink: 0;
+}
+
+.bin-inventory-item .inv-id {
+  font-size: 11px;
+  font-weight: 600;
+  color: #d1d5db;
+  font-family: 'JetBrains Mono', monospace;
+  min-width: 28px;
+}
+
+.bin-inventory-item .inv-zone {
+  font-size: 10px;
+  color: #6b7280;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bin-inventory-item .inv-pct {
+  font-size: 10px;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', monospace;
+  min-width: 32px;
+  text-align: right;
+}
+
+/* ─── Tooltip ─── */
+.bin-tooltip {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  padding: 8px 12px;
+  min-width: 140px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  z-index: 100;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.bin-node:hover .bin-tooltip {
+  opacity: 1;
+}
+
+.bin-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: var(--color-border);
+}
+
+/* ─── Responsive tweaks ─── */
+@media (max-width: 1200px) {
+  #sidebar { width: 240px; }
+  #metrics-panel { width: 260px; }
+}
+
+@media (max-width: 900px) {
+  main { flex-direction: column; }
+  #sidebar,
+  #metrics-panel {
+    width: 100%;
+    max-height: 200px;
+    border-right: none;
+    border-left: none;
+  }
+}
