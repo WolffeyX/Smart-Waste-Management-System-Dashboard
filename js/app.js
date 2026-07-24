@@ -10,9 +10,9 @@ const SAMPLE_BINS = [
   { id: "B1", zoneName: "Jalan Merak 1",   capacity: 20, x: 120, y: 100  },
   { id: "B2", zoneName: "Jalan Merak 2",   capacity: 85, x: 280, y: 100  },
   { id: "B3", zoneName: "Jalan Merak 3",   capacity: 45, x: 440, y: 100  },
-  { id: "B4", zoneName: "Jalan Nuri 1",    capacity: 90, x: 120, y: 250  },
+  { id: "B4", zoneName: "Jalan Nuri 1",    capacity: 90, x: 440, y: 250  },
   { id: "B5", zoneName: "Jalan Nuri 2",    capacity: 10, x: 280, y: 250  },
-  { id: "B6", zoneName: "Jalan Nuri 3",    capacity: 60, x: 440, y: 250  },
+  { id: "B6", zoneName: "Jalan Nuri 3",    capacity: 60, x: 120, y: 250  },
   { id: "B7", zoneName: "Jalan Enggang 1", capacity: 30, x: 120, y: 400  },
   { id: "B8", zoneName: "Jalan Enggang 2", capacity: 95, x: 280, y: 400  },
   { id: "B9", zoneName: "Jalan Enggang 3", capacity: 50, x: 440, y: 400  },
@@ -21,16 +21,16 @@ const SAMPLE_BINS = [
 const DEPOT = { id: "DEPOT", zoneName: "Truck Depot", capacity: 0, x: 50, y: 50 };
 
 const ROAD_NETWORK = {
-  DEPOT: { B1: 2.0, B4: 2.5 },
-  B1: { DEPOT: 2.0, B2: 1.5, B4: 1.8 },
+  DEPOT: { B1: 2.0, B6: 2.5 },
+  B1: { DEPOT: 2.0, B2: 1.5, B6: 1.8 },
   B2: { B1: 1.5, B3: 1.5, B5: 1.8 },
-  B3: { B2: 1.5, B6: 2.0 },
-  B4: { DEPOT: 2.5, B1: 1.8, B5: 1.5, B7: 1.8 },
+  B3: { B2: 1.5, B4: 2.0 },
+  B4: { B3: 2.0, B5: 1.5, B9: 1.8 },
   B5: { B2: 1.8, B4: 1.5, B6: 1.5, B8: 1.8 },
-  B6: { B3: 2.0, B5: 1.5, B9: 1.8 },
-  B7: { B4: 1.8, B8: 1.5 },
+  B6: { DEPOT: 2.5, B1: 1.8, B5: 1.5, B7: 1.8 },
+  B7: { B6: 1.8, B8: 1.5 },
   B8: { B5: 1.8, B7: 1.5, B9: 1.5 },
-  B9: { B6: 1.8, B8: 1.5 },
+  B9: { B4: 1.8, B8: 1.5 },
 };
 
 // ─── State ───

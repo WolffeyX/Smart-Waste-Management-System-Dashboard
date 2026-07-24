@@ -676,16 +676,16 @@ class Graph {
   console.group("🗺️ Graph — Dijkstra's Shortest Path O((V+E) log V)");
 
   const ROAD_NETWORK_TEST = {
-    DEPOT: { B1: 2.0, B4: 2.5 },
-    B1: { DEPOT: 2.0, B2: 1.5, B4: 1.8 },
+    DEPOT: { B1: 2.0, B6: 2.5 },
+    B1: { DEPOT: 2.0, B2: 1.5, B6: 1.8 },
     B2: { B1: 1.5, B3: 1.5, B5: 1.8 },
-    B3: { B2: 1.5, B6: 2.0 },
-    B4: { DEPOT: 2.5, B1: 1.8, B5: 1.5, B7: 1.8 },
+    B3: { B2: 1.5, B4: 2.0 },
+    B4: { B3: 2.0, B5: 1.5, B9: 1.8 },
     B5: { B2: 1.8, B4: 1.5, B6: 1.5, B8: 1.8 },
-    B6: { B3: 2.0, B5: 1.5, B9: 1.8 },
-    B7: { B4: 1.8, B8: 1.5 },
+    B6: { DEPOT: 2.5, B1: 1.8, B5: 1.5, B7: 1.8 },
+    B7: { B6: 1.8, B8: 1.5 },
     B8: { B5: 1.8, B7: 1.5, B9: 1.5 },
-    B9: { B6: 1.8, B8: 1.5 },
+    B9: { B4: 1.8, B8: 1.5 },
   };
 
   const graph = Graph.fromNetwork(ROAD_NETWORK_TEST);

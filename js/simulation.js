@@ -20,14 +20,21 @@ let isSimulationRunning = false;
  *
  * @param {string[]} routePath - Ordered array of node IDs (e.g., ["DEPOT", "B4", "B8", ...])
  * @param {HashTable} hashTable - HashTable instance containing all nodes with coordinates
+ * @param {Set|null} stopNodes - Set of node IDs where the truck should pause (dwell).
+ *                               If null, the truck stops at every node.
+ * @param {Function|null} onCollect - Callback fired when truck collects from a stop node.
+ *                                    Receives the bin ID as argument.
  */
-async function animateTruck(routePath, hashTable) {
+async function animateTruck(routePath, hashTable, stopNodes = null, onCollect = null) {
   const truck = document.querySelector('#truck');
 
   if (!truck) {
     console.error("❌ Truck element #truck not found in DOM!");
     return;
   }
+
+  // Track which bins have already been collected (to avoid stopping again on return trip)
+  const collected = new Set();
 
   // Move truck through each waypoint
   for (let binId of routePath) {
@@ -37,8 +44,25 @@ async function animateTruck(routePath, hashTable) {
       truck.style.left = `${targetNode.coordinates.x}px`;
       truck.style.top = `${targetNode.coordinates.y}px`;
 
-      // Wait 1.5s (1s CSS transition + 0.5s dwell time)
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Determine if the truck should stop here
+      const isDepot = binId === "DEPOT";
+      const isStopTarget = stopNodes === null || (stopNodes.has(binId) && !collected.has(binId));
+
+      if (isDepot || isStopTarget) {
+        // Wait for transition (0.3s) + dwell time (0.7s) for collection
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
+        // Collect: empty the bin after the truck stops
+        if (onCollect && !isDepot && !collected.has(binId)) {
+          if (stopNodes === null || stopNodes.has(binId)) {
+            onCollect(binId);
+            collected.add(binId);
+          }
+        }
+      } else {
+        // Pass-through: just enough for CSS transition (300ms) to complete
+        await new Promise(resolve => setTimeout(resolve, 320));
+      }
     }
   }
 }
@@ -138,7 +162,8 @@ async function runSimulation(mode, binsArray, roadNetwork) {
     console.log(`📊 Baseline: ${binsVisited} bins, ${totalDistance.toFixed(2)} km`);
 
   } else {
-    // ═══ OPTIMIZED MODE: Priority Queue — visit ONLY urgent bins (≥80%) ═══
+    // ═══ OPTIMIZED MODE: Priority Queue + Nearest-Neighbor Routing ═══
+    // Step 1: Use Priority Queue to identify and extract all urgent bins (≥80%)
     const pq = new PriorityQueue();
 
     // Enqueue only urgent bins (capacity >= 80%), priority = capacity
@@ -157,22 +182,43 @@ async function runSimulation(mode, binsArray, roadNetwork) {
 
     console.log(`⏫ Optimized PQ: ${pq.size()} urgent bins queued`);
 
-    // Build route: DEPOT → highest priority → next → ... → DEPOT
+    // Step 2: Extract all urgent bin IDs from PQ into a set for nearest-neighbor routing
+    const urgentBins = new Set();
+    while (!pq.isEmpty()) {
+      urgentBins.add(pq.dequeue());
+    }
+    console.log(`🗺️ Urgent bins to visit: [${[...urgentBins].join(", ")}]`);
+
+    // Step 3: Nearest-neighbor greedy routing — always go to the closest unvisited urgent bin
     fullRouteArray.push("DEPOT");
     let currentNode = "DEPOT";
+    const unvisited = new Set(urgentBins);
 
-    while (!pq.isEmpty()) {
-      const nextBinId = pq.dequeue(); // Extracts highest capacity first
-      const segment = graph.dijkstra(currentNode, nextBinId);
+    while (unvisited.size > 0) {
+      // Find the nearest unvisited urgent bin from current position using Dijkstra
+      let nearestBin = null;
+      let nearestDist = Infinity;
+      let nearestPath = [];
 
-      if (segment.path.length > 0) {
-        totalDistance += segment.distance;
-        for (let i = 1; i < segment.path.length; i++) {
-          fullRouteArray.push(segment.path[i]);
+      for (const binId of unvisited) {
+        const segment = graph.dijkstra(currentNode, binId);
+        if (segment.distance < nearestDist) {
+          nearestDist = segment.distance;
+          nearestBin = binId;
+          nearestPath = segment.path;
         }
       }
-      binsVisited++;
-      currentNode = nextBinId;
+
+      // Move to the nearest urgent bin
+      if (nearestBin && nearestPath.length > 0) {
+        totalDistance += nearestDist;
+        for (let i = 1; i < nearestPath.length; i++) {
+          fullRouteArray.push(nearestPath[i]);
+        }
+        unvisited.delete(nearestBin);
+        binsVisited++;
+        currentNode = nearestBin;
+      }
     }
 
     // Return to DEPOT
@@ -202,7 +248,44 @@ async function runSimulation(mode, binsArray, roadNetwork) {
 
   // ─── 6. Animate Truck ───
   console.log("🚛 Starting truck animation...");
-  await animateTruck(fullRouteArray, hashTable);
+
+  // In optimized mode, only stop at urgent bins (the ones we're collecting)
+  // In baseline mode, stop at every bin (stopNodes = null)
+  let stopNodes = null;
+  let onCollect = null;
+
+  if (mode === "optimized") {
+    stopNodes = new Set(
+      binsArray.filter(b => b.capacity >= 80).map(b => b.id)
+    );
+
+    // When truck collects from a bin, set capacity to 0 and update the UI
+    onCollect = (binId) => {
+      const bin = binsArray.find(b => b.id === binId);
+      if (bin) {
+        bin.capacity = 0;
+        bin.isUrgent = false;
+        console.log(`🗑️ Collected ${binId} — capacity reset to 0%`);
+        renderAll();
+      }
+    };
+  } else {
+    // Baseline mode: truck collects from ALL bins, emptying each one
+    // Use stopNodes = all bin IDs so the return-to-DEPOT segment passes through quickly
+    stopNodes = new Set(binsArray.map(b => b.id));
+
+    onCollect = (binId) => {
+      const bin = binsArray.find(b => b.id === binId);
+      if (bin) {
+        bin.capacity = 0;
+        bin.isUrgent = false;
+        console.log(`🗑️ Collected ${binId} — capacity reset to 0%`);
+        renderAll();
+      }
+    };
+  }
+
+  await animateTruck(fullRouteArray, hashTable, stopNodes, onCollect);
   console.log("✅ Simulation complete!");
 
   console.groupEnd();
