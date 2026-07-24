@@ -296,8 +296,7 @@ btnReset.addEventListener("click", resetBins);
 btnEmptyAll.addEventListener("click", emptyAllBins);
 
 btnRun.addEventListener("click", () => {
-  // TODO: Wire to simulation.js once algorithms are implemented
-  console.log(`[Run] Mode: ${currentMode} — Simulation not yet implemented.`);
+  runSimulation(currentMode, bins, ROAD_NETWORK);
 });
 
 // ═══════════════════════════════════════════
